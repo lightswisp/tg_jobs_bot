@@ -1,0 +1,11 @@
+development:
+  clients:
+    default:
+      database: jobs
+      hosts:
+        - db:27017
+      options:
+        auth_source: 'admin'
+        user: 'admin'      
+      # The password of the user for authentication.
+        password: '123456789'

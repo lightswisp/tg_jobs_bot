@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Документация</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+<body>
+  <div class="container">
+
+  	<h1>Краткое описание проекта</h1>
+  	<hr>
+  	<p>Общение с базой данных происходит на порту 4567 по адресу 127.0.0.1.</p>
+  	<p>API написано на Sinatra и Ruby. База данных MongoDB. В базе данных есть два столбца, User и Job.</p>
+  	<p>Оплата происходит через телеграм бота, агрегатора платежей можно выбрать по желанию</p>
+  	<p>Всего в этом проекте используется три API ключа:</p>
+  	<li>Один для телеграм бота</li>
+  	<li>Второй для административных действий со стороны телеграм бота (для активации аккаунтов)</li>
+  	<li>Третий для авторизации пользователей и возможность взаимодействовать с основным функционалом API сервера</li>
+  	<br>
+  	<h1>Структура базы данных</h1>
+  	<hr>
+  	<h3>Job таблица</h3>
+	<br>
+	<pre style="color:pink;font-weight:bold;">
+class Job
+  include Mongoid::Document
+
+  field :title, type: String
+  field :type, type: String
+  field :description, type: String
+  field :post_date, type: Time, default: ->{ Time.now }
+  field :applicants, type: Array, default: ->{ Array.new }
+
+  belongs_to :user
+	
+  validates :title, presence: true
+  validates :type, presence: true
+  validates :description, presence: true
+
+end
+	</pre>
+	
+  	<h3>User таблица</h3>
+  		<br>
+	<pre style="color:pink;font-weight:bold;">
+class User
+  include Mongoid::Document
+
+  field :email, type: String
+  field :password, type: String
+  field :account_resume, type: Hash, default: ->{{
+  		"fio" => "пусто",
+  		"education" => "пусто",
+  		"birthday" => "пусто",
+  		"skills" => "пусто",
+  		"experience" => "пусто",
+  		"job_type" => "пусто"
+  }}
+  field :api_key, type: String
+  field :activation, type: Hash, default: -> {{
+  		"employer" => 0,
+  		"applicant" => 0	
+  }}
+  field :applications, type: Array, default: -> { Array.new }
+
+  has_many :jobs
+
+  validates :api_key, presence: true
+  validates :email, presence: true
+  validates :password, presence: true
+  validates :activation, presence: true
+
+end
+	</pre>
+  	<hr>
+
+  	<br>
+    <h1>API Документация</h1>
+
+   	<hr>
+ 
+    <p>Базовый URL: <code>http://127.0.0.1:4567/api/v1</code></p>
+
+    <h2>Конечные точки</h2>
+
+    <h3>GET /my/applications</h3>
+    <p>Получение отправленных заявок</p>
+    <p>Параметры:</p>
+    <ul>
+      <li><code>api_key</code> (string, обязательно) - API ключ пользователя.</li>
+      <li><code>page</code> (integer, обязательно) - Номер страницы (для пагинации).</li>
+    </ul>
+    <pre><code>GET /api/v1/my/applications?api_key=&lt;api_key&gt;&amp;page=&lt;page&gt;</code></pre>
+
+    <h3>GET /jobs/{type}</h3>
+    <p>Получение информации о работе разного типа (есть всего два типа: freelance и fulltime).</p>
+    <p>Параметры:</p>
+    <ul>
+      <li><code>api_key</code> (string, обязательно) - API ключ пользователя.</li>
+      <li><code>page</code> (integer, обязательно) - Номер страницы (для пагинации).</li>
+    </ul>
+    <pre><code>GET /api/v1/jobs/{type}?api_key=&lt;api_key&gt;&amp;page=&lt;page&gt;</code></pre>
+
+    <h3>GET /my/jobs</h3>
+    <p>Получение своих рабочих мест, т.е постов (со стороны работодателя)</p>
+    <p>Параметры:</p>
+    <ul>
+      <li><code>api_key</code> (string, обязательно) - API ключ пользователя.</li>
+      <li><code>page</code> (integer, обязательно) - Номер страницы (для пагинации).</li>
+    </ul>
+    <pre><code>GET /api/v1/my/jobs?api_key=&lt;api_key&gt;&amp;page=&lt;page&gt;</code></pre>
+
+    <h3>GET /my/jobs/applicants</h3>
+    <p>Получение списка кандидатов на рабочее место</p>
+    <p>Параметры:</p>
+    <ul>
+      <li><code>api_key</code> (string, обязательно) - API ключ пользователя.</li>
+      <li><code>page</code> (integer, обязательно) - Номер страницы (для пагинации).</li>
+    </ul>
+    <pre><code>GET /api/v1/my/jobs/applicants?api_key=&lt;api_key&gt;&amp;page=&lt;page&gt;</code></pre>
+
+    <h3>POST /jobs</h3>
+    <p>Создание рабочего места</p>
+    <p>Тело запросаy:</p>
+    <pre><code>{
+  "api_key": "your_api_key",
+  "title": "Job Title",
+  "type": "Job Type",
+  "description": "Job Description"
+}</code></pre>
+    <pre><code>POST /api/v1/jobs</code></pre>
+
+    <h3>POST /update/job</h3>
+    <p>Изменить описание рабочего места.</p>
+    <p>Тело запроса:</p>
+    <pre><code>{
+  "api_key": "your_api_key",
+  "job_id": "job_id_to_update",
+  "title": "Updated Job Title",
+  "description": "Updated Job Description"
+}</code></pre>
+    <pre><code>POST /api/v1/update/job</code></pre>
+
+    <h3>POST /apply</h3>
+    <p>Откликнуться на заявку по работе</p>
+    <p>Тело запроса:</p>
+    <pre><code>{
+  "api_key": "your_api_key",
+  "job_id": "job_id_to_apply"
+}</code></pre>
+    <pre><code>POST /api/v1/apply</code></pre>
+
+    <h3>GET /info</h3>
+    <p>Получение информации о пользователе.</p>
+    <p>Параметры:</p>
+    <ul>
+      <li><code>api_key</code> (string, обязательно) - API ключ пользователя.</li>
+    </ul>
+    <pre><code>GET /api/v1/info?api_key=&lt;api_key&gt;</code></pre>
+    
+    <h3>POST /update/resume</h3>
+    <p>Обновление резюме</p>
+    <p>Тело запроса:</p>
+    <pre><code>{
+      "api_key": "your_api_key",
+      "account_resume": {
+        "field1": "value1",
+        "field2": "value2"
+      }
+    }</code></pre>
+    <pre><code>POST /api/v1/update/resume</code></pre>
+    
+    <h3>POST /activate</h3>
+    <p>Активация аккаунта (нужен административный токен, т.е API_SUPER_TOKEN).</p>
+    <p>Тело запроса:</p>
+    <pre><code>{
+      "api_super_token": "your_super_token",
+      "api_key": "user_api_key",
+      "account_type": "employer or applicant",
+      "active_until": "timestamp"
+    }</code></pre>
+    <pre><code>POST /api/v1/activate</code></pre>
+    
+    <h3>POST /login</h3>
+    <p>Вход в аккаунт</p>
+    <p>Тело запроса:</p>
+    <pre><code>{
+      "email": "user_email",
+      "password": "user_password"
+    }</code></pre>
+    <pre><code>POST /api/v1/login</code></pre>
+    
+    <h3>POST /register</h3>
+    <p>Регистрация аккаунта.</p>
+    <p>Тело запроса:</p>
+    <pre><code>{
+      "email": "user_email",
+      "password": "user_password"
+    }</code></pre>
+    <pre><code>POST /api/v1/register</code></pre>
+    
+
+	<hr>
+  </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+services:
+  bot:
+    build: .
+    command: sh -c "ruby bot.rb"
+    networks:
+      - mynetwork
+    tty: true
+  db:
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=123456789
+    networks:
+      - mynetwork
+    ports: 
+      - 27017:27017
+    volumes:
+      - ~/mongo:/data/db:rw
+  api:
+    build:
+      context: ./api_server
+      dockerfile: Dockerfile
+    command: sh -c "ruby server.rb"
+    networks:
+      - mynetwork
+    tty: true
+    ports:
+      - 4567:4567
+
+networks:
+  mynetwork:
+
+    

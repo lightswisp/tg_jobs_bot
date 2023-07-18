@@ -1,0 +1,10 @@
+db.createUser(
+     {
+       user: "jobs_admin",
+       pwd: "uNBDHakk9KttaYgs7hwg",
+       roles: [ { role: "dbOwner", db: "jobs" } ]
+     }
+   )
+
+
+
